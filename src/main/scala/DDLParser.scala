@@ -13,7 +13,8 @@ object DDLParser extends JavaTokenParsers {
   val columnDelimiter = """,*""".r
 
   // Columns: column name, data type, not null, autoincr, default value
-  case class CreateTable(name: String, columns: List[(String, String, Boolean, Boolean, Option[String])])
+  case class CreateTable(name: String, columns: List[Column])
+  case class Column(name: String, datatype: String, notNull: Boolean, autoInc: Boolean, defaultVal: Option[String])
 
   def cleanString(str: String) = str.replaceAll("`", "")
 
@@ -33,7 +34,7 @@ object DDLParser extends JavaTokenParsers {
         val columnsData = columns map { entry =>
           entry match {
             case colName ~ colType ~ notNull ~ autoInc ~ isDefault ~ _ =>
-              (cleanString(colName), colType, notNull.isDefined, autoInc.isDefined, isDefault.map(_._2))
+              Column(cleanString(colName), colType, notNull.isDefined, autoInc.isDefined, isDefault.map(_._2))
           }
         }
         CreateTable(cleanString(name), columnsData)
