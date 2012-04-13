@@ -4,24 +4,42 @@ import scala.util.parsing.combinator._
 import scala.util.parsing.combinator.syntactical._
 
 object DDLParser extends JavaTokenParsers {
-  val tableName  = """[a-zA-Z]+""".r
+  val tableName  = """(`)?[a-zA-Z]+(`)?""".r
   val columnName = tableName
   val indexName  = tableName
-  val dataType   = "INT" | "SHIT"
+  val default    = tableName
+  val dataType   = """[a-zA-Z]+(\([0-9]+\))?""".r
   val statementTermination = ";"
-  val columnDelimiter = ",*".r
+  val columnDelimiter = """,*""".r
 
-  case class CreateTable(name: String, columns: Map[String, String])
+  // Columns: column name, data type, not null, autoincr, default value
+  case class CreateTable(name: String, columns: List[(String, String, Boolean, Boolean, Option[String])])
+
+  def cleanString(str: String) = str.replaceAll("`", "")
 
   // Handle comments
   protected override val whiteSpace = """(\s|#.*|(?m)/\*(\*(?!/)|[^*])*\*/;*)+""".r
 
-  def createTable = "CREATE" ~ "TABLE" ~ tableName ~
-    "(" ~ ((columnName ~ dataType ~ columnDelimiter)*) ~ ")" ^^ {
-      case _ ~ _ ~ name ~ _ ~ columns ~ _ =>
-        CreateTable(name, columns.map(x => (x._1._1,x._1._2)).toMap)
+  def createTable = ("""(?i)CREATE TABLE""".r) ~ ("""(?i)IF NOT EXISTS""".r?) ~ tableName ~
+    "(" ~
+      ((columnName ~ dataType ~
+        ("""(?i)NOT NULL""".r?) ~ ("""(?i)AUTO_INCREMENT""".r?) ~ ((("""(?i)DEFAULT""".r) ~ default)?) ~
+        columnDelimiter)*) ~
+      /*((("""(?i)PRIMARY KEY""".r) ~ "(" ~ columnName ~ ")" ~ columnDelimiter)?) ~
+      ((("""(?i)UNIQUE""".r?) ~ ("""(?i)KEY""".r) ~ indexName ~ "(" ~ columnName ~ ")" ~ columnDelimiter)?) ~
+      */
+    ")" ^^ {
+      case _ ~ _ ~ name ~ "(" ~ columns ~ ")" => {
+        val columnsData = columns map { entry =>
+          entry match {
+            case colName ~ colType ~ notNull ~ autoInc ~ isDefault ~ _ =>
+              (cleanString(colName), colType, notNull.isDefined, autoInc.isDefined, isDefault.map(_._2))
+          }
+        }
+        CreateTable(cleanString(name), columnsData)
+      }
     }
-  def dropTable = "DROP" ~ "TABLE" ~ tableName
+  def dropTable = "(?i)DROP" ~ "(?i)TABLE" ~ tableName
   def statement = (createTable | dropTable) ~ statementTermination ^^ { case res ~ _ => res }
   def program   = statement*
 
