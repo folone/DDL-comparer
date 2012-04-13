@@ -26,9 +26,8 @@ object DDLParser extends JavaTokenParsers {
       ((columnName ~ dataType ~
         ("""(?i)NOT NULL""".r?) ~ ("""(?i)AUTO_INCREMENT""".r?) ~ ((("""(?i)DEFAULT""".r) ~ default)?) ~
         columnDelimiter)*) ~
-      /*((("""(?i)PRIMARY KEY""".r) ~ "(" ~ columnName ~ ")" ~ columnDelimiter)?) ~
-      ((("""(?i)UNIQUE""".r?) ~ ("""(?i)KEY""".r) ~ indexName ~ "(" ~ columnName ~ ")" ~ columnDelimiter)?) ~
-      */
+      //((("""(?i)PRIMARY KEY""".r) ~ "(" ~ columnName ~ ")" ~ columnDelimiter)?) ~
+      //((("""(?i)UNIQUE""".r?) ~ ("""(?i)KEY""".r) ~ indexName ~ "(" ~ columnName ~ ")" ~ columnDelimiter)?) ~
     ")" ^^ {
       case _ ~ _ ~ name ~ "(" ~ columns ~ ")" => {
         val columnsData = columns map { entry =>

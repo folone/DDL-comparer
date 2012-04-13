@@ -1,0 +1,15 @@
+;; This config was generated using ensime-config-gen. Feel free to customize its contents manually.
+
+(
+
+:project-name "ddl-comparer"
+
+:project-package "info.folone"
+
+:sources ("./")
+
+:compile-jars ("./")
+
+:target "./target/"
+
+)
