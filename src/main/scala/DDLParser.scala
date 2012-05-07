@@ -15,7 +15,7 @@ object DDLParser extends JavaTokenParsers {
   val statementTermination = ";"
   val columnDelimiter = """,*""".r
 
-  final case class Table(name: String, columns: List[Column], constraints: List[Constraint])
+  final case class Table(name: String, columns: Set[Column], constraints: Set[Constraint])
   final case class Column(name: String, datatype: String, notNull: Boolean,
                     autoInc: Boolean, defaultVal: Option[String])
   sealed abstract case class Constraint
@@ -66,7 +66,7 @@ object DDLParser extends JavaTokenParsers {
             Column(cleanString(colName), colType, notNull.isDefined,
                    autoInc.isDefined, isDefault.map(_._2))
         }
-        Table(cleanString(name), columnsData, constraints)
+        Table(cleanString(name), columnsData.toSet, constraints.toSet)
       }
     }
   def dropTable = "(?i)DROP TABLE" ~ tableName
